@@ -2,10 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/db.js";
 
 // 1. Menampilkan semua speaker
-export const getSpeakers = async (
-  req: Request,
-  res: Response
-) => {
+export const getSpeakers = async (req: Request, res: Response) => {
   try {
     const allSpeakers = await prisma.speaker.findMany({
       orderBy: {
@@ -17,16 +14,13 @@ export const getSpeakers = async (
   } catch (error) {
     res.status(500).json({
       message: "Gagal mengambil data speaker",
-      error,
+      error: error instanceof Error ? error.message : error,
     });
   }
 };
 
 // 2. Mengambil speaker berdasarkan id
-export const getSpeakerById = async (
-  req: Request,
-  res: Response
-) => {
+export const getSpeakerById = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
 
@@ -46,62 +40,56 @@ export const getSpeakerById = async (
   } catch (error) {
     res.status(500).json({
       message: "Gagal mengambil speaker",
-      error,
+      error: error instanceof Error ? error.message : error,
     });
   }
 };
 
-// 3. Menambahkan speaker
-export const createSpeaker = async (
-  req: Request,
-  res: Response
-) => {
+// 3. Menambahkan speaker (Sudah Dioptimalkan)
+export const createSpeaker = async (req: Request, res: Response) => {
   try {
-    const { name, role, image } = req.body;
+    const { name, role } = req.body;
 
-    if (!name || !role || !image) {
+    // Validasi kecukupan data request
+    if (!name || !role) {
       return res.status(400).json({
-        message: "Name, role, dan image wajib diisi",
+        message: "Nama dan Role wajib diisi",
       });
     }
 
     const newSpeaker = await prisma.speaker.create({
       data: {
-        name,
-        role,
-        image,
+        name: name.trim(),
+        role: role.trim(),
       },
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Speaker berhasil ditambahkan",
       speaker: newSpeaker,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Gagal menambahkan speaker",
-      error,
+    console.error("Error creating speaker:", error);
+    return res.status(500).json({
+      message: "Gagal menambahkan speaker di database",
+      error: error instanceof Error ? error.message : error, // Mengirimkan pesan teks error asli dari Supabase/Prisma
     });
   }
 };
 
 // 4. Update speaker
-export const updateSpeaker = async (
-  req: Request,
-  res: Response
-) => {
+export const updateSpeaker = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-
-    const { name, role} = req.body;
+    const { name, role } = req.body;
 
     const updatedSpeaker = await prisma.speaker.update({
       where: {
         id,
       },
       data: {
-        name,
-        role,
+        name: name?.trim(),
+        role: role?.trim(),
       },
     });
 
@@ -109,16 +97,13 @@ export const updateSpeaker = async (
   } catch (error) {
     res.status(500).json({
       message: "Gagal mengupdate speaker",
-      error,
+      error: error instanceof Error ? error.message : error,
     });
   }
 };
 
 // 5. Hapus speaker
-export const deleteSpeaker = async (
-  req: Request,
-  res: Response
-) => {
+export const deleteSpeaker = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
 
@@ -134,7 +119,7 @@ export const deleteSpeaker = async (
   } catch (error) {
     res.status(500).json({
       message: "Gagal menghapus speaker",
-      error,
+      error: error instanceof Error ? error.message : error,
     });
   }
 };
