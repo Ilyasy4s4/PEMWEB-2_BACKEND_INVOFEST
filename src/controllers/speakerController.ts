@@ -57,11 +57,11 @@ export const createSpeaker = async (
   res: Response
 ) => {
   try {
-    const { name, role} = req.body;
+    const { name, role, image } = req.body;
 
-    if (!name || !role) {
+    if (!name || !role || !image) {
       return res.status(400).json({
-        message: "Name and role wajib diisi",
+        message: "Name, role, dan image wajib diisi",
       });
     }
 
@@ -69,6 +69,7 @@ export const createSpeaker = async (
       data: {
         name,
         role,
+        image,
       },
     });
 
