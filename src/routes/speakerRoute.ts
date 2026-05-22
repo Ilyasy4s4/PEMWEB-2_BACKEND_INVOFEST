@@ -1,16 +1,20 @@
 import express from "express";
 
 import {
-    getSpeakers,
-    createSpeaker,
-    updateSpeaker,
-    deleteSpeaker,
-} from "../controllers/speakerController";
+  getSpeakers,
+  getSpeakerById,
+  createSpeaker,
+  updateSpeaker,
+  deleteSpeaker,
+} from "../controllers/speakerController.js";
 
 const router = express.Router();
 
-// menampilkan data speaker
+// menampilkan semua speaker
 router.get("/", getSpeakers);
+
+// mengambil speaker berdasarkan id
+router.get("/:id", getSpeakerById);
 
 // menyimpan data speaker
 router.post("/", createSpeaker);
@@ -20,5 +24,6 @@ router.put("/:id", updateSpeaker);
 
 // menghapus data speaker berdasarkan id
 router.delete("/:id", deleteSpeaker);
+
 
 export default router;

@@ -1,69 +1,137 @@
-import {Request, Response} from 'express';
-import {Category} from '../types/category';
+import { Request, Response } from "express";
+import { prisma } from "../lib/db.js";
 
-let Categories: Category[] = [];
+// 1. Menampilkan semua category
+export const getCategories = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const allCategories = await prisma.category.findMany({
+      orderBy: {
+        id: "desc",
+      },
+    });
 
-//1. Menampilkan data category
-export const getCategories = (req: Request, res: Response) => {
-    res.json(Categories);
+    res.json(allCategories);
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil data category",
+      error,
+    });
+  }
 };
 
-//2. Menyimpan data category
-export const createCategory = (req: Request, res: Response) => {
+// 2. Menambahkan category
+export const createCategory = async (
+  req: Request,
+  res: Response
+) => {
+  try {
     const { name } = req.body;
 
-    // validasi jika field name belum diisi
     if (!name) {
-        return res.status(500).json({ message: "Field name category harus diisi" });
+      return res.status(400).json({
+        message: "Field name wajib diisi",
+      });
     }
 
-    const newCategory: Category = {
-        id: Date.now(), // generate id unik berdasarkan timestamp
-        name: name,
-    };
+    const newCategory = await prisma.category.create({
+      data: {
+        name,
+      },
+    });
 
-    Categories.push(newCategory);
-    res.status(201).json({ message: "Category berhasil ditambahkan", category: newCategory });
+    res.status(201).json({
+      message: "Category berhasil ditambahkan",
+      category: newCategory,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal menambahkan category",
+      error,
+    });
+  }
 };
 
-//3.Mengambil data berdasarkan id
-export const getCategoryById = (req: Request, res: Response) => {
+// 3. Mengambil category berdasarkan id
+export const getCategoryById = async (
+  req: Request,
+  res: Response
+) => {
+  try {
     const id = Number(req.params.id);
-    
-    const category = Categories.find((c) => c.id === id);
+
+    const category = await prisma.category.findUnique({
+      where: {
+        id,
+      },
+    });
 
     if (!category) {
-        return res.status(404).json({ message: "Category tidak ditemukan" });
+      return res.status(404).json({
+        message: "Category tidak ditemukan",
+      });
     }
 
     res.json(category);
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil category",
+      error,
+    });
+  }
 };
 
-//4. Mengupdate data category berdasarkan id
-export const updateCategory = (req: Request, res: Response) => {
+// 4. Update category
+export const updateCategory = async (
+  req: Request,
+  res: Response
+) => {
+  try {
     const id = Number(req.params.id);
 
-    const category = Categories.find((c) => c.id === id);
+    const { name } = req.body;
 
-    if (!category) {
-        return res.status(404).json({
-            message: "Category tidak ditemukan",
-        });
-    }
+    const updatedCategory = await prisma.category.update({
+      where: {
+        id,
+      },
+      data: {
+        name,
+      },
+    });
 
-    category.name = req.body.name ?? category.name;
-
-    res.json(category);
+    res.json(updatedCategory);
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengupdate category",
+      error,
+    });
+  }
 };
 
-
-//5. Menghapus data category berdasarkan id
-export const deleteCategory = (req: Request, res: Response) => {
+// 5. Hapus category
+export const deleteCategory = async (
+  req: Request,
+  res: Response
+) => {
+  try {
     const id = Number(req.params.id);
 
-    Categories = Categories.filter((c) => c.id !== id);
+    await prisma.category.delete({
+      where: {
+        id,
+      },
+    });
 
     res.json({
-        message: "Category berhasil dihapus",
+      message: "Category berhasil dihapus",
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal menghapus category",
+      error,
+    });
+  }
 };

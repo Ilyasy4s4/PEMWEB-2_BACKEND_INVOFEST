@@ -1,60 +1,139 @@
 import { Request, Response } from "express";
-import { Speaker } from "../types/speaker";
+import { prisma } from "../lib/db.js";
 
-let speakers: Speaker[] = [];
+// 1. Menampilkan semua speaker
+export const getSpeakers = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const allSpeakers = await prisma.speaker.findMany({
+      orderBy: {
+        id: "desc",
+      },
+    });
 
-//1. Menampilkan data speaker
-export const getSpeakers = (req: Request, res: Response) => {
-    res.json(speakers);
+    res.json(allSpeakers);
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil data speaker",
+      error,
+    });
+  }
 };
 
-//2. Menyimpan data speaker
-export const createSpeaker = (req: Request, res: Response) => {
-    const { nama, role } = req.body;
-
-    // validasi sederhana
-    if (!nama || !role) {
-        return res.status(400).json({
-            message: "Nama dan role wajib diisi",
-        });
-    }
-
-    const newSpeaker: Speaker = {
-        id: Date.now(),
-        nama: nama,
-        role: role,
-    };
-
-    speakers.push(newSpeaker);
-
-    res.status(201).json(newSpeaker);
-};
-
-//3. Mengupdate data speaker berdasarkan id
-export const updateSpeaker = (req: Request, res: Response) => {
+// 2. Mengambil speaker berdasarkan id
+export const getSpeakerById = async (
+  req: Request,
+  res: Response
+) => {
+  try {
     const id = Number(req.params.id);
 
-    const speaker = speakers.find((s) => s.id === id);
+    const speaker = await prisma.speaker.findUnique({
+      where: {
+        id,
+      },
+    });
 
     if (!speaker) {
-        return res.status(404).json({
-            message: "Speaker tidak ditemukan",
-        });
+      return res.status(404).json({
+        message: "Speaker tidak ditemukan",
+      });
     }
 
-    speaker.nama = req.body.nama ?? speaker.nama;
-    speaker.role = req.body.role ?? speaker.role;
-
     res.json(speaker);
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil speaker",
+      error,
+    });
+  }
 };
 
-//4. Menghapus data speaker berdasarkan id
-export const deleteSpeaker = (req: Request, res: Response) => {
+// 3. Menambahkan speaker
+export const createSpeaker = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { name, role} = req.body;
+
+    if (!name || !role) {
+      return res.status(400).json({
+        message: "Name and role wajib diisi",
+      });
+    }
+
+    const newSpeaker = await prisma.speaker.create({
+      data: {
+        name,
+        role,
+      },
+    });
+
+    res.status(201).json({
+      message: "Speaker berhasil ditambahkan",
+      speaker: newSpeaker,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal menambahkan speaker",
+      error,
+    });
+  }
+};
+
+// 4. Update speaker
+export const updateSpeaker = async (
+  req: Request,
+  res: Response
+) => {
+  try {
     const id = Number(req.params.id);
 
-    speakers = speakers.filter((s) => s.id !== id);
+    const { name, role} = req.body;
+
+    const updatedSpeaker = await prisma.speaker.update({
+      where: {
+        id,
+      },
+      data: {
+        name,
+        role,
+      },
+    });
+
+    res.json(updatedSpeaker);
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengupdate speaker",
+      error,
+    });
+  }
+};
+
+// 5. Hapus speaker
+export const deleteSpeaker = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const id = Number(req.params.id);
+
+    await prisma.speaker.delete({
+      where: {
+        id,
+      },
+    });
 
     res.json({
-        message: "Speaker berhasil dihapus",
+      message: "Speaker berhasil dihapus",
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal menghapus speaker",
+      error,
+    });
+  }
 };
